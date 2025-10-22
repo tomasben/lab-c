@@ -7,13 +7,13 @@ typedef enum {
 } celltype;
 
 struct cell {
-    int x;
-    int y;
+    int row;
+    int col;
     celltype type;
     int weight;
 };
 
-struct grid {
+struct matrix {
     int height;
     int width;
     // puntero al primer elemento de un bloque contiguo de h * w celdas
@@ -22,8 +22,8 @@ struct grid {
     struct cell *cells;
 };
 
-struct grid* create_grid(int h, int w);
+struct matrix* create_matrix(int h, int w);
 
-void destroy_grid(struct grid *g);
+void destroy_matrix(struct matrix *m);
 
-struct cell* get_cell(struct grid *g, int h, int w);
+struct cell* get_cell(struct matrix *m, int row, int col);

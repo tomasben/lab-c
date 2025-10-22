@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "main.h"
 
@@ -48,30 +47,30 @@ void print_cell(struct cell *c)
     }
 }
 
-void print_map(struct grid *g)
+void print_map(struct matrix *m)
 {
     int i, j;
 
     printf("\n");
     printf("%s%s", LEFT_PADDING, BORDER_UPPER_LEFT);
-    for (i = 1; i <= g->width; i++)
+    for (i = 0; i < m->width; i++)
     {
         printf("%s", BORDER_HORIZONTAL);
     }
     printf("%s\n", BORDER_UPPER_RIGHT);
 
-    for (i = 1; i <= g->height; i++)
+    for (i = 0; i < m->height; i++)
     {
         printf("%s%s", LEFT_PADDING, BORDER_VERTICAL);
-        for (j = 1; j <= g->width; j++)
+        for (j = 0; j < m->width; j++)
         {
-            print_cell(get_cell(g, i, j));
+            print_cell(get_cell(m, i, j));
         }
         printf("%s\n", BORDER_VERTICAL);
     }
 
     printf("%s%s", LEFT_PADDING, BORDER_LOWER_LEFT);
-    for (i = 1; i <= g->width; i++)
+    for (i = 0; i < m->width; i++)
     {
         printf("%s", BORDER_HORIZONTAL);
     }

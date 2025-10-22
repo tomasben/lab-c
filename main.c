@@ -5,79 +5,91 @@
 
 #include "main.h"
 #include "cli.h"
+#include "path.h"
 
-struct cell* get_cell(struct grid *g, int h, int w)
+/*
+ * @brief Devuelve un puntero a una celda (x, y)
+ *
+ * @param m Puntero a la matriz donde buscar la celda
+ * @param row Coordenada en eje Y comenzando desde el 0
+ * @param col Coordenada en eje X comenzando desde el 0
+ * @return Puntero a la celda especificada o NULL si fuera de los límites
+ */
+struct cell* get_cell(struct matrix *m, int row, int col)
 {
-    if ((h <= 0 || h > g->height) || (w <= 0 || w > g->width))
+    if ((row < 0 || row >= m->height) || (col < 0 || col >= m->width))
     {
-        printf("Intentando indexar celda fuera de los límites h%i - w%i", h, w);
+        printf("Intentando indexar elemento fuera de los límites a%i%i\n", row, col);
         return NULL;
     }
 
     // Fórmula para obtener elemento a_ij de una matriz 2D en memoria contigua
     // índice = (i * longitud) + j
-    return &g->cells[((h-1) * g->width) + (w-1)];
+    return &m->cells[row * m->width + col];
 }
 
 
-struct grid* create_grid(int h, int w)
+struct matrix* create_matrix(int h, int w)
 {
-    struct grid *g = malloc(sizeof(struct grid));
-    if (g == NULL) return NULL;
+    if (h <= 0 || w <= 0) return NULL;
 
-    g->height = h;
-    g->width = w;
+    struct matrix *m = malloc(sizeof(struct matrix));
+    if (m == NULL) return NULL;
+
+    m->height = h;
+    m->width = w;
 
     size_t total_cells = (size_t)h * w;
-    g->cells = malloc(total_cells * sizeof(struct cell));
-    if (g->cells == NULL)
+    m->cells = malloc(total_cells * sizeof(struct cell));
+    if (m->cells == NULL)
     {
-        printf("No se pudo asignar las celdas del mapa. Abortando...");
-        free(g);
+        printf("No se pudo asignar las celdas del mapa. Abortando...\n");
+        free(m);
         return NULL;
     }
 
     int i, j;
-    for (i = 1; i <= h; i++)
+    for (i = 0; i < h; i++)
     {
-        for (j = 1; j <= w; j++)
+        for (j = 0; j < w; j++)
         {
-            struct cell *c = get_cell(g, i, j);
-            c->x = i;
-            c->y = j;
+            struct cell *c = get_cell(m, i, j);
+            c->row = i;
+            c->col = j;
             c->type = EMPTY;
             c->weight = 1;
         }
     }
 
-    return g;
+    return m;
 }
 
-void destroy_grid(struct grid *g)
+void destroy_matrix(struct matrix *m)
 {
-    if (g != NULL)
+    if (m != NULL)
     {
-        free(g->cells);
-        free(g);
+        free(m->cells);
+        free(m);
     }
 }
 
 int main(void)
 {
-    struct grid *map = create_grid(25, 50);
+    struct matrix *map = create_matrix(25, 50);
 
-    struct cell *c;
-    c = get_cell(map, 25, 50);
-    if (c != NULL)
+    struct cell *start, *end;
+    start = get_cell(map, 23, 48);
+    if (start != NULL)
     {
-        c->type = START;
+        start->type = START;
     }
 
-    c = get_cell(map, 2, 2);
-    if (c != NULL)
+    end = get_cell(map, 2, 4);
+    if (end != NULL)
     {
-        c->type = END;
+        end->type = END;
     }
 
+    dijkstra(map, start, end);
     print_map(map);
 }

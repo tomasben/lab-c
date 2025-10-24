@@ -1,10 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-#include "main.h"
+#include "matrix.h"
 
-#define SOLID_SHADE "█"
-#define DARK_SHADE "▒"
-#define LIGHT_SHADE "░"
 #define ARROW "▶"
 #define TARGET "◎"
 #define SQUARE "■"
@@ -17,10 +15,6 @@
 #define BORDER_LOWER_LEFT "╚"
 #define BORDER_LOWER_RIGHT "╝"
 
-#define VERTICAL "|"
-#define HORIZONTAL "-"
-#define CROSS "+"
-
 #define LEFT_PADDING "    "
 
 void print_cell(struct cell *c)
@@ -28,16 +22,16 @@ void print_cell(struct cell *c)
     switch (c->type)
     {
         case EMPTY:
-            printf("%s", LIGHT_SHADE);
+            printf("%c", ' ');
             break;
         case START:
-            printf("%s", ARROW);
+            printf("%c", '+');
             break;
         case END:
             printf("%s", TARGET);
             break;
         case OBSTACLE:
-            printf("%s", DARK_SHADE);
+            printf("%s", SQUARE);
             break;
         case PATH:
             printf("%s", DOT);
@@ -75,4 +69,13 @@ void print_map(struct matrix *m)
         printf("%s", BORDER_HORIZONTAL);
     }
     printf("%s\n", BORDER_LOWER_RIGHT);
+}
+
+void clear()
+{
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
 }

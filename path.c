@@ -1,51 +1,38 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "main.h"
+#include "matrix.h"
+#include "path.h"
 
 #define INFINITY 999999
 
-struct vertex {
-    int row;
-    int col;
-};
-
-struct vertex* get_neighbours(struct matrix *m, struct cell *current, int *neighbour_count)
+struct cell* get_neighbours(struct matrix *m, struct cell *current, int *neighbour_count)
 {
+    int allow_diagonal_moves = 1;
     int count = 0;
-    struct vertex candidates[4];
+    struct vertex candidates[8];
 
-    if (current->row > 0) // Arriba
-    {
-        candidates[count].row = current->row - 1;
-        candidates[count].col = current->col;
-        count++;
-    }
+    int dy[8] = {-1, 1, 0,  0, -1, -1,  1, 1};
+    int dx[8] = { 0, 0, 1, -1, -1,  1, -1, 1};
+    int limit = allow_diagonal_moves ? 8 : 4;
 
-    if (current->row < (m->height - 1)) // Abajo
+    struct vertex temp = {0};
+    for (int i = 0; i < limit; i++)
     {
-        candidates[count].row = current->row + 1;
-        candidates[count].col = current->col;
-        count++;
-    }
+        temp.row = current->row + dy[i];
+        temp.col = current->col + dx[i];
 
-    if (current->col < (m->width - 1)) // Derecha
-    {
-        candidates[count].row = current->row;
-        candidates[count].col = current->col + 1;
-        count++;
-    }
-
-    if (current->col > 0) // Izquierda
-    {
-        candidates[count].row = current->row;
-        candidates[count].col = current->col - 1;
-        count++;
+        if ((temp.row >= 0 && temp.row < m->height)
+            && (temp.col >= 0 && temp.col < m->width))
+        {
+            candidates[count] = temp;
+            count++;
+        }
     }
 
     *neighbour_count = count;
 
-    struct vertex *neighbours = (struct vertex *)malloc(count * sizeof(struct vertex));
+    struct cell *neighbours = (struct cell *)malloc(count * sizeof(struct cell));
     if (neighbours == NULL)
     {
         printf("Error al almacenar memoria para vértices vecinos");
@@ -54,7 +41,7 @@ struct vertex* get_neighbours(struct matrix *m, struct cell *current, int *neigh
 
     for (int i = 0; i < count; i++)
     {
-        neighbours[i] = candidates[i];
+        neighbours[i] = *get_cell(m, candidates[i].row, candidates[i].col);
     }
 
     return neighbours;
@@ -82,7 +69,7 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
     while (1)
     {
         int min_dist = INFINITY;
-        struct cell *current = NULL;
+        struct cell *current, *temp = NULL;
 
         // Obtenemos el nodo mas cercano
         // En la primera iteración será el nodo de inicio porque su distancia es 0
@@ -90,10 +77,12 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
         {
             for (j = 0; j < m->width; j++)
             {
-                if (!visited[i][j] && distance[i][j] < min_dist)
+                temp = get_cell(m, i, j);
+                if (!visited[i][j] && distance[i][j] < min_dist
+                    && temp->type != OBSTACLE)
                 {
                     min_dist = distance[i][j];
-                    current = get_cell(m, i, j);
+                    current = temp;
                 }
             }
         }
@@ -103,53 +92,52 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
         {
             break;
         }
-        printf("\n[iter %i] elemento elegido: A%i%i\n", iter, current->row, current->col);
+        // printf("\n[iter %i] elemento elegido: A%i%i\n", iter, current->row, current->col);
 
         visited[current->row][current->col] = 1;
 
         // Obtenemos todas las celdas vecinas al nodo actual y actualizamos la
         // distancia hasta estos sumando a su distancia actual el recorrido hecho
         int neighbour_count = 0;
-        struct vertex *neighbours = get_neighbours(m, current, &neighbour_count);
+        struct cell *neighbours = get_neighbours(m, current, &neighbour_count);
 
         for (i = 0; i < neighbour_count; i++)
         {
-            struct vertex nth_neighbour = neighbours[i];
-            struct cell *neighbour_cell = get_cell(m, nth_neighbour.row, nth_neighbour.col);
-
-            if (neighbour_cell && !visited[nth_neighbour.row][nth_neighbour.col])
+            struct cell *nth_neighbour = &neighbours[i];
+            if (nth_neighbour && !visited[nth_neighbour->row][nth_neighbour->col])
             {
-                int new_dist = distance[current->row][current->col] + neighbour_cell->weight;
+                int new_dist = distance[current->row][current->col] + nth_neighbour->weight;
 
-                if (new_dist < distance[nth_neighbour.row][nth_neighbour.col])
+                if (new_dist < distance[nth_neighbour->row][nth_neighbour->col])
                 {
-                    distance[nth_neighbour.row][nth_neighbour.col] = new_dist;
-                    previous[nth_neighbour.row][nth_neighbour.col] = current;
+                    distance[nth_neighbour->row][nth_neighbour->col] = new_dist;
+                    previous[nth_neighbour->row][nth_neighbour->col] = current;
                 }
             }
         }
 
-        for (i = 0; i < m->height; i++)
-        {
-            for (j = 0; j < m->width; j++)
-            {
-                printf(
-                    "A%i%i visitado: %i & distancia: %i\n",
-                    i, j, visited[i][j], distance[i][j]);
-            }
-        }
+        // for (i = 0; i < m->height; i++)
+        // {
+        //     for (j = 0; j < m->width; j++)
+        //     {
+        //         printf(
+        //             "A%i%i visitado: %i & distancia: %i\n",
+        //             i, j, visited[i][j], distance[i][j]);
+        //     }
+        // }
 
         free(neighbours);
         iter++;
     }
 
-    struct cell *current = target;
-    while (current != start)
+    // Reconstruimos el camino hasta el inicio
+    struct cell *current = previous[target->row][target->col];
+    while (current != NULL && current != start)
     {
-        current = previous[current->row][current->col];
         if (current != NULL)
         {
             current->type = PATH;
         }
+        current = previous[current->row][current->col];
     }
 }

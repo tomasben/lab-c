@@ -6,17 +6,21 @@
 
 #define INFINITY 999999
 
-struct cell* get_neighbours(struct matrix *m, struct cell *current, int *neighbour_count)
+struct cell* get_neighbours(struct matrix *m, struct cell *current,
+    int *neighbour_count)
 {
-    int allow_diagonal_moves = 1;
     int count = 0;
     struct vertex candidates[8];
 
+    //            ↑  ↓  →   ←   ↖   ↗   ↙  ↘
     int dy[8] = {-1, 1, 0,  0, -1, -1,  1, 1};
     int dx[8] = { 0, 0, 1, -1, -1,  1, -1, 1};
-    int limit = allow_diagonal_moves ? 8 : 4;
 
-    struct vertex temp = {0};
+    // [4] para las direcciones cardinales
+    // y [8] para direcciones alrededor
+    int limit = m->allow_diag_moves ? 8 : 4;
+
+    struct vertex temp;
     for (int i = 0; i < limit; i++)
     {
         temp.row = current->row + dy[i];
@@ -92,7 +96,6 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
         {
             break;
         }
-        // printf("\n[iter %i] elemento elegido: A%i%i\n", iter, current->row, current->col);
 
         visited[current->row][current->col] = 1;
 

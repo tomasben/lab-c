@@ -18,20 +18,16 @@ struct matrix {
     int width;
     int max_weight;
     int allow_diag_moves;
-    // Puntero al 1° elemento de un bloque contiguo de celdas
+    // Puntero al 1er elemento de un bloque contiguo de celdas
     // (0, 0) | (0, 1) | (0, 2) | (0, 3) | (1, 0) | (1, 1) | ...
     struct cell *cells;
 };
 
 struct cell* get_cell(struct matrix *m, int row, int col);
 
-void set_cell_weight(struct matrix *m);
+void set_cell_type(struct matrix *m, int row, int col, celltype new_type);
 
-void set_range_weight(struct matrix *m);
-
-void set_cell_type(struct matrix *m, celltype new_t);
-
-void set_range_type(struct matrix *m, celltype new_t);
+void set_cell_weight(struct matrix *m, int row, int col, int new_weight);
 
 struct matrix* create_matrix(int h, int w, int allow_diag);
 

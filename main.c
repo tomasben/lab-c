@@ -1,20 +1,22 @@
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "main.h"
 #include "matrix.h"
-#include "cli.h"
 #include "path.h"
+#include "cli.h"
+#include "utils.h"
 
 #define MATRIX_H_LIMIT 100
 #define MATRIX_W_LIMIT 150
 
 /*
- * Todo:
- * (1) Manejo de números negativos o grandes en inputs
- * (2) Mejorar mostrado de matriz en pantalla usando buffers
- * (3) Añadir opción para enumerar filas y columnas al mostrar matriz
+ * TODO:
+ * (*) Manejo de números negativos o grandes en inputs
+ * (*) Mejorar mostrado de matriz en pantalla usando buffers
+ * (*) Añadir opción para enumerar filas y columnas al mostrar matriz
  */
 
 int main(void)
@@ -22,28 +24,30 @@ int main(void)
     const char *overview =
     "                                                    \n"
     "    ┏━━━┳━━━┳━━━┓    ┃ Dimensiones: %i✕%i          \n"
-    "    ┣━━━╋━━━╋━━━┫    ┃ Permitir mov. diagonales? %s\n"
+    "    ┣━━━╋━━━╋━━━┫    ┃ Permitir desplazamientos diagonales? %s\n"
     "    ┣━━━╋━━━╋━━━┫    ┃ Punto de inicio: (%i, %i)   \n"
     "    ┗━━━┻━━━┻━━━┛    ┃ Punto de fín: (%i, %i)      \n";
 
-    struct matrix *map = define_matrix();
+    const char *options =
+    "\n  OPCIONES:                         "
+    "\n    [1] Definir celdas de obstáculos"
+    "\n    [2] Modificar costos de celdas  "
+    // "\n    [3] Previsualizar mapa          "
+    "\n    [4] Calcular camino óptimo      ";
+
+    struct matrix *map = define_map();
     struct cell *start = define_start(map);
     struct cell *end = define_end(map, start);
 
     int input = 0;
-    int should_continue = 1;
-    while (should_continue)
+    int cont = 1;
+    while (cont)
     {
         clear();
         printf(overview, map->height, map->width,
-            map->allow_diag_moves ? "Si" : "No", start->row + 1,
-            start->col + 1, end->row + 1, end->col + 1);
-
-        printf("\n  OPCIONES:");
-        printf("\n    [1] Definir celdas de obstáculos");
-        printf("\n    [2] Modificar costos de celdas");
-        // printf("\n    [3] Previsualizar mapa");
-        printf("\n    [4] Calcular camino óptimo");
+            map->allow_diag_moves ? "Si" : "No", start->col + 1,
+            start->row + 1, end->col + 1, end->row + 1);
+        printf(options);
         printf("\n\n  ▶ "); scanf(" %i", &input);
 
         switch (input)
@@ -57,10 +61,8 @@ int main(void)
             case 3:
                 break;
             case 4:
-                should_continue = 0;
+                cont = 0;
                 break;
-            default:
-                continue;
         }
     }
 
@@ -68,9 +70,9 @@ int main(void)
     print_map(map);
 }
 
-struct matrix* define_matrix()
+struct matrix* define_map()
 {
-    const char *text_header =
+    const char *header =
     "                                 \n"
     "           ┏━━━┳━━━┳━━━┓         \n"
     "           ┣━━━╋━━━╋━━━┫         \n"
@@ -81,7 +83,7 @@ struct matrix* define_matrix()
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
     clear();
-    write(1, text_header, strlen(text_header));
+    printf(header);
     int mat_h, mat_w = 0;
 
     printf("\n  (1/4) Ingrese las dimensiones del mapa \n");
@@ -99,8 +101,9 @@ struct matrix* define_matrix()
             break;
         }
 
-        printf("\n  Error: el mapa puede tener un máximo de %i✕%i celdas.\n", MATRIX_H_LIMIT, MATRIX_W_LIMIT);
-        printf("  Ingrese las dimensiones nuevamente.\n");
+        printf("\n  Error: el mapa puede tener un máximo de %i✕%i celdas.",
+            MATRIX_H_LIMIT, MATRIX_W_LIMIT);
+        printf("\n  Ingrese las dimensiones nuevamente.\n");
     }
 
     char input;
@@ -132,73 +135,45 @@ struct matrix* define_matrix()
 
 struct cell* define_start(struct matrix *m)
 {
-    int max_h = m->height;
-    int max_w = m->width;
-
-    struct vertex point = {0};
-
     printf("\n  (3/4) Seleccione el punto de partida\n");
-    while (1)
-    {
-        printf("\n  Coordenada en X: "); scanf("%i", &point.col);
-        printf("  Coordenada en Y: "); scanf("%i", &point.row);
+    struct vertex *point = get_vertices(m, 1);
+    if (point == NULL) return NULL;
 
-        if (point.row <= max_h && point.col <= max_w)
-        {
-            break;
-        }
+    struct cell *start = get_cell(m, point->row - 1, point->col - 1);
+    if (start != NULL) start->type = START;
 
-        printf("\n  Error: coordenada fuera de los límites.");
-        printf("\n  Por favor ingrese un par entre (0, 0) y (%i, %i).\n", max_w, max_h);
-    }
-
-    struct cell *start = get_cell(m, point.row - 1, point.col - 1);
-    if (start != NULL)
-    {
-        start->type = START;
-    }
+    free(point);
 
     return start;
 }
 
 struct cell* define_end(struct matrix *m, struct cell *start)
 {
-    int max_h = m->height;
-    int max_w = m->width;
-    int start_x = start->col + 1;
-    int start_y = start->row + 1;
-
-    struct vertex point = {0};
-
     printf("\n  (4/4) Seleccione el punto de fín\n");
+
+    struct vertex *point = {0};
     while (1)
     {
-        printf("\n  Coordenada en X: "); scanf("%i", &point.col);
-        printf("  Coordenada en Y: "); scanf("%i", &point.row);
+        point = get_vertices(m, 1);
+        if (point == NULL) return NULL;
 
-        if ((point.row <= max_h && point.col <= max_w)
-            && (point.row != start_y || point.col != start_x))
-        {
-            break;
-        }
+        if (point->row != (start->row+1) || point->col != (start->col+1)) break;
 
-        printf("\n  Error: coordenada fuera de los límites o inválida.");
-        printf("\n  Por favor ingrese un par entre (0, 0) y (%i, %i).", max_w, max_h);
-        printf("\n  y diferente del punto de inicio (%i, %i).\n", start_x, start_y);
+        free(point);
+        printf("\n  Error: el punto de fin e inicio no pueden coincidir.\n");
     }
 
-    struct cell *end = get_cell(m, point.row - 1, point.col - 1);
-    if (end != NULL)
-    {
-        end->type = END;
-    }
+    struct cell *end = get_cell(m, point->row - 1, point->col - 1);
+    if (end != NULL) end->type = END;
+
+    free(point);
 
     return end;
 }
 
 void define_obstacles(struct matrix *m)
 {
-    const char *text_header =
+    const char *header =
     "                                 \n"
     "           ┏━━━━━━━━━━━┓         \n"
     "           ┃█████•••▶••┃         \n"
@@ -209,39 +184,73 @@ void define_obstacles(struct matrix *m)
     "  ━━━ Definición de obstáculos ━━\n"
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
+    const char *options =
+    "\n  OPCIONES:                                      "
+    "\n   [1] Definir una celda como obstáculo          "
+    "\n   [2] Definir un rango de celdas como obstáculos"
+    "\n   [3] Retroceder ↩︎                              ";
+
+    const char *info =
+    "\n  🛈  Defina dos puntos en la misma fila o columna para crear"
+    "\n  una línea de obstáculos, o seleccione dos puntos diferentes"
+    "\n  para marcar el área comprendida entre estos.\n             ";
+
     int input = 0;
-    int should_continue = 1;
-    while (should_continue)
+    int cont = 1;
+    while (cont)
     {
         clear();
-        write(1, text_header, strlen(text_header));
-
-        printf("\n  OPCIONES:");
-        printf("\n   [1] Definir una celda como obstáculo");
-        printf("\n   [2] Definir un rango de celdas como obstáculos");
-        printf("\n   [3] Retroceder ↩︎");
-        printf("\n\n  ▶ "); scanf(" %i", &input);
+        printf(header);
+        printf(options);
+        printf("\n\n  ▶ ");
+        scanf(" %i", &input);
 
         switch (input)
         {
             case 1:
-                set_cell_type(m, OBSTACLE);
+            {
+                struct vertex *points = get_vertices(m, 1);
+                if (points == NULL) break;
+
+                struct vertex point = points[0];
+                set_cell_type(m, point.row - 1, point.col - 1, OBSTACLE);
+
+                free(points);
                 break;
+            }
             case 2:
-                set_range_type(m, OBSTACLE);
+            {
+                printf(info);
+                struct vertex *points = get_vertices(m, 2);
+                struct vertex p1 = points[0],  p2 = points[1];
+
+                int min_row = (p2.row > p1.row) ? p1.row : p2.row;
+                int max_row = (p2.row > p1.row) ? p2.row : p1.row;
+                int min_col = (p2.col > p1.col) ? p1.col : p2.col;
+                int max_col = (p2.col > p1.col) ? p2.col : p1.col;
+
+                for (int i = min_row; i <= max_row; i++)
+                {
+                    for (int j = min_col; j <= max_col; j++)
+                    {
+                        set_cell_type(m, i, j, OBSTACLE);
+                    }
+                }
+
                 break;
+            }
             case 3:
-                should_continue = 0;
+            {
+                cont = 0;
                 break;
-            default:
-                continue;
+            }
         }
     }
 }
 
 void define_areas(struct matrix *m)
 {
-    const char *text_header =
+    const char *header =
     "                                 \n"
     "           ┏━━━━━━━━━━━┓         \n"
     "           ┃▓▓▒▒▒▒░░░░░┃         \n"
@@ -258,31 +267,66 @@ void define_areas(struct matrix *m)
     "\n   [2] Modificar el peso de un rango de celdas"
     "\n   [3] Retroceder ↩︎                           ";
 
+    const char *info = "\n  🛈  El peso máximo actual de una celda es de %i\n";
+
     int input = 0;
-    int should_continue = 1;
-    while (should_continue)
+    int cont = 1;
+    while (cont)
     {
         clear();
-        write(1, text_header, strlen(text_header));
-        printf("\n  🛈  El peso máximo actual de una celda es de %i\n",
-            m->max_weight);
-
-        write(1, options, strlen(options));
-        printf("\n\n  ▶ "); scanf(" %i", &input);
+        printf(header);
+        printf(info, m->max_weight);
+        printf(options);
+        printf("\n\n  ▶ ");
+        scanf(" %i", &input);
 
         switch (input)
         {
             case 1:
-                set_cell_weight(m);
+            {
+                struct vertex *points = get_vertices(m, 1);
+                if (points == NULL) break;
+
+                int new_weight = 1;
+                printf("\n  Ingrese nuevo peso: ");
+                scanf(" %i", &new_weight);
+
+                struct vertex point = points[0];
+                set_cell_weight(m, point.row - 1, point.col - 1, new_weight);
+
+                free(points);
                 break;
+            }
             case 2:
-                set_range_weight(m);
+            {
+                struct vertex *points = get_vertices(m, 2);
+                struct vertex p1 = points[0],  p2 = points[1];
+
+                int new_weight = 1;
+                printf("\n  Ingrese nuevo peso: ");
+                scanf(" %i", &new_weight);
+
+                int min_row = (p2.row > p1.row) ? p1.row : p2.row;
+                int max_row = (p2.row > p1.row) ? p2.row : p1.row;
+                int min_col = (p2.col > p1.col) ? p1.col : p2.col;
+                int max_col = (p2.col > p1.col) ? p2.col : p1.col;
+
+                for (int i = min_row; i <= max_row; i++)
+                {
+                    for (int j = min_col; j <= max_col; j++)
+                    {
+                        printf("Setting cell (%i, %i) to weight of %i\n", j, i, new_weight);
+                        set_cell_weight(m, i, j, new_weight);
+                    }
+                }
+
                 break;
+            }
             case 3:
-                should_continue = 0;
+            {
+                cont = 0;
                 break;
-            default:
-                continue;
+            }
         }
     }
 }

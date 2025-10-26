@@ -26,191 +26,24 @@ struct cell* get_cell(struct matrix *m, int row, int col)
     return &m->cells[row * m->width + col];
 }
 
-void set_cell_weight(struct matrix *m)
+void set_cell_weight(struct matrix *m, int row, int col, int new_weight)
 {
-    int max_h = m->height;
-    int max_w = m->width;
-    int new_w = 1;
-    struct vertex point = {0};
-
-    while (1)
-    {
-        printf("\n  Coordenada en el eje X: ");
-        scanf(" %i", &point.col);
-        printf("  Coordenada en el eje Y: ");
-        scanf(" %i", &point.row);
-
-        printf("\n  Nuevo peso: "); scanf(" %i", &new_w);
-
-        if ((point.row > 0 && point.row <= max_h)
-            && (point.col > 0 && point.col <= max_w))
-        {
-            break;
-        }
-
-        printf("\n  Error: coordenada fuera de los límites.");
-        printf("\n  Por favor ingrese un par entre (0, 0) y (%i, %i).\n", max_w, max_h);
-    }
-
-    if (new_w > m->max_weight) m->max_weight = new_w;
-
-    struct cell *cell = get_cell(m, point.row, point.col);
+    struct cell *cell = get_cell(m, row, col);
     if (cell != NULL)
     {
-        cell->weight = new_w;
+        if (cell->type == START) return;
+        if (new_weight > m->max_weight) m->max_weight = new_weight;
+        cell->weight = new_weight;
     }
 }
 
-void set_range_weight(struct matrix *m)
+void set_cell_type(struct matrix *m, int row, int col, celltype new_type)
 {
-    int max_h = m->height;
-    int max_w = m->width;
-    int new_w = 1;
-    struct vertex p1 = {0}, p2 = {0};
-    struct vertex *points[] = {&p1, &p2};
-
-    printf("\n  🛈  Defina dos puntos en la misma fila o columna para modificar"
-           "\n  el peso de la línea de celdas, o seleccione dos puntos diferentes"
-           "\n  para modificar el área comprendida entre estos.\n");
-
-    int should_continue = 1;
-    while (should_continue)
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            int x_pos, y_pos;
-            struct vertex *current = points[i];
-
-            printf("\n  Coordenada X del extremo #%i: ", i + 1);
-            scanf(" %i", &x_pos);
-
-            printf("  Coordenada Y del extremo #%i: ", i + 1);
-            scanf(" %i", &y_pos);
-
-            current->col = x_pos;
-            current->row = y_pos;
-        }
-
-        if ((p1.row > 0 && p1.row <= max_h) && (p1.col > 0 && p1.col <= max_w)
-            && (p2.row > 0 && p2.row <= max_h) && (p2.col > 0 && p2.col <= max_w))
-        {
-            break;
-        }
-
-        printf("\n  Error: coordenadas fuera de los límites.");
-        printf("\n  Por favor ingrese pares entre (0, 0) y (%i, %i).", max_w, max_h);
-    }
-
-    printf("\n  Nuevo peso: "); scanf(" %i", &new_w);
-
-    int min_row = (p2.row > p1.row) ? p1.row : p2.row;
-    int max_row = (p2.row > p1.row) ? p2.row : p1.row;
-    int min_col = (p2.col > p1.col) ? p1.col : p2.col;
-    int max_col = (p2.col > p1.col) ? p2.col : p1.col;
-
-    if (new_w > m->max_weight) m->max_weight = new_w;
-
-    struct cell *cell;
-    for (int i = min_row; i <= max_row; i++)
-    {
-        for (int j = min_col; j <= max_col; j++)
-        {
-            cell = get_cell(m, i, j);
-            if (cell != NULL)
-            {
-                cell->weight = new_w;
-            }
-        }
-    }
-}
-
-void set_cell_type(struct matrix *m, celltype new_t)
-{
-    int max_h = m->height;
-    int max_w = m->width;
-    struct vertex point = {0};
-
-    while (1)
-    {
-        printf("\n  Coordenada en el eje X: ");
-        scanf(" %i", &point.col);
-        printf("  Coordenada en el eje Y: ");
-        scanf(" %i", &point.row);
-
-        if ((point.row > 0 && point.row <= max_h)
-            && (point.col > 0 && point.col <= max_w))
-        {
-            break;
-        }
-
-        printf("\n  Error: coordenada fuera de los límites.");
-        printf("\n  Por favor ingrese un par entre (0, 0) y (%i, %i).\n", max_w, max_h);
-    }
-
-    struct cell *cell = get_cell(m, point.row, point.col);
+    struct cell *cell = get_cell(m, row, col);
     if (cell != NULL)
     {
         if (cell->type == START || cell->type == END) return;
-        cell->type = new_t;
-    }
-}
-
-void set_range_type(struct matrix *m, celltype new_t)
-{
-    int max_h = m->height;
-    int max_w = m->width;
-    struct vertex p1 = {0}, p2 = {0};
-    struct vertex *points[] = {&p1, &p2};
-
-    printf("\n  🛈  Defina dos puntos en la misma fila o columna para crear"
-           "\n  una línea de obstáculos, o seleccione dos puntos diferentes"
-           "\n  para marcar el área comprendida entre estos.\n");
-
-    int should_continue = 1;
-    while (should_continue)
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            int x_pos, y_pos;
-            struct vertex *current = points[i];
-
-            printf("\n  Coordenada X del extremo #%i: ", i + 1);
-            scanf(" %i", &x_pos);
-
-            printf("  Coordenada Y del extremo #%i: ", i + 1);
-            scanf(" %i", &y_pos);
-
-            current->col = x_pos;
-            current->row = y_pos;
-        }
-
-        if ((p1.row > 0 && p1.row <= max_h) && (p1.col > 0 && p1.col <= max_w)
-            && (p2.row > 0 && p2.row <= max_h) && (p2.col > 0 && p2.col <= max_w))
-        {
-            break;
-        }
-
-        printf("\n  Error: coordenadas fuera de los límites.");
-        printf("\n  Por favor ingrese pares entre (0, 0) y (%i, %i).", max_w, max_h);
-    }
-
-    int min_row = (p2.row > p1.row) ? p1.row : p2.row;
-    int max_row = (p2.row > p1.row) ? p2.row : p1.row;
-    int min_col = (p2.col > p1.col) ? p1.col : p2.col;
-    int max_col = (p2.col > p1.col) ? p2.col : p1.col;
-
-    struct cell *cell;
-    for (int i = min_row; i <= max_row; i++)
-    {
-        for (int j = min_col; j <= max_col; j++)
-        {
-            cell = get_cell(m, i, j);
-            if (cell != NULL)
-            {
-                if (cell->type == START || cell->type == END) return;
-                cell->type = new_t;
-            }
-        }
+        cell->type = new_type;
     }
 }
 
@@ -249,13 +82,4 @@ struct matrix* create_matrix(int h, int w, int allow_diag)
     }
 
     return m;
-}
-
-void destroy_matrix(struct matrix *m)
-{
-    if (m != NULL)
-    {
-        free(m->cells);
-        free(m);
-    }
 }

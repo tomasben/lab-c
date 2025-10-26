@@ -1,4 +1,4 @@
-struct matrix* define_matrix();
+struct matrix* define_map();
 
 struct cell* define_start(struct matrix *m);
 

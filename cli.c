@@ -62,11 +62,12 @@ void print_cell(struct matrix *m, struct cell *c)
 void print_map(struct matrix *m)
 {
     const char *references =
-    "                              \n"
-    "  Referencias:                \n"
-    "  [◎] es el punto de partida  \n"
-    "  [✗] es el punto de fín      \n"
-    "  [•] es el mejor camino      \n";
+    "  Referencias:                                                      \n"
+    "   [█] bloque sólido: representa obstáculos  ┃ [•] pasos del camino \n"
+    "   [▓] sombreado alto: celdas de peso mayor  ┃ [◎] punto de inicio  \n"
+    "   [▒] sombreado medio: celdas de peso medio ┃ [✗] punto de fín     \n"
+    "   [░] sombreado bajo: celdas de peso menor  ┃                      \n";
+
     int i, j;
 
     printf("\n");
@@ -94,7 +95,7 @@ void print_map(struct matrix *m)
     }
     printf("%s\n", BORDER_LOWER_RIGHT);
 
-    write(1, references, strlen(references));
+    printf("\n%s", references);
 }
 
 void clear()

@@ -6,7 +6,7 @@
 #include "path.h"
 
 /*
- * @brief Devuelve un puntero a un elemento a_(ij) de la matriz
+ * @brief Devuelve un puntero a un elemento a[ij] de la matriz
  *
  * @param m Puntero a la matriz donde buscar la celda
  * @param row Coordenada en eje Y comenzando desde el 0

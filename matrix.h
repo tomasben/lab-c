@@ -19,7 +19,7 @@ struct matrix {
     int max_weight;
     int allow_diag_moves;
     // Puntero al 1er elemento de un bloque contiguo de celdas
-    // (0, 0) | (0, 1) | (0, 2) | (0, 3) | (1, 0) | (1, 1) | ...
+    // (0, 0) | (0, 1) | (0, 2) | (0, 3) | (1, 0) | ...
     struct cell *cells;
 };
 

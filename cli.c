@@ -24,42 +24,38 @@
 
 #define LEFT_PADDING "  "
 
-void print_cell(struct matrix *m, struct cell *c)
+const char* get_cell_char(struct matrix *m, int row, int col)
 {
     float ratio;
-    switch (c->type)
+    struct cell *cell = get_cell(m, row, col);
+
+    switch (cell->type)
     {
         case EMPTY:
-            ratio = c->weight / m->max_weight;
+            ratio = cell->weight / m->max_weight;
 
             if (ratio <= 0.25)
-                printf("%c", ' ');
+                return " ";
             else if (ratio <= 0.50)
-                printf("%s", LIGHT_SHADE);
+                return LIGHT_SHADE;
             else if (ratio <= 0.75)
-                printf("%s", MEDIUM_SHADE);
+                return MEDIUM_SHADE;
             else
-                printf("%s", DARK_SHADE);
-
-            break;
+                return " ";
         case START:
-            printf("%s", TARGET);
-            break;
+            return TARGET;
         case END:
-            printf("%s", CROSS);
-            break;
+            return CROSS;
         case OBSTACLE:
-            printf("%s", SOLID_BLOCK);
-            break;
+            return SOLID_BLOCK;
         case PATH:
-            printf("%s", DOT);
-            break;
+            return DOT;
         default:
-            printf("%s", INVALID);
+            return INVALID;
     }
 }
 
-void print_map(struct matrix *m)
+void print_map(struct matrix *m, int label_lines, int print_references)
 {
     const char *references =
     "  Referencias:                                                      \n"
@@ -68,34 +64,74 @@ void print_map(struct matrix *m)
     "   [▒] sombreado medio: celdas de peso medio ┃ [✗] punto de fín     \n"
     "   [░] sombreado bajo: celdas de peso menor  ┃                      \n";
 
-    int i, j;
+    size_t buffer_size = ((m->width + 4) * 4) * (m->height + 2) + strlen(references);
+    if (label_lines) buffer_size += (2 * 4) * (m->height + 2) + ((m->width + 6) * 4);
 
-    printf("\n");
-    printf("%s%s", LEFT_PADDING, BORDER_UPPER_LEFT);
-    for (i = 0; i < m->width; i++)
-    {
-        printf("%s", BORDER_HORIZONTAL);
-    }
-    printf("%s\n", BORDER_UPPER_RIGHT);
+    char *buffer = malloc(buffer_size);
+    if (buffer == NULL) return;
 
-    for (i = 0; i < m->height; i++)
+    char *ptr = buffer;
+
+    ptr += sprintf(ptr, "\n");
+    if (label_lines)
     {
-        printf("%s%s", LEFT_PADDING, BORDER_VERTICAL);
-        for (j = 0; j < m->width; j++)
+        ptr += sprintf(ptr, "    0  ");
+
+        for (int i = 1; i <= m->width; i++)
         {
-            print_cell(m, get_cell(m, i, j));
+            if (i % 5 == 0)
+                ptr += sprintf(ptr, "%i", i % 10);
+            else
+                ptr += sprintf(ptr, "%s", DOT);
         }
-        printf("%s\n", BORDER_VERTICAL);
+        ptr += sprintf(ptr, "\n");
     }
 
-    printf("%s%s", LEFT_PADDING, BORDER_LOWER_LEFT);
-    for (i = 0; i < m->width; i++)
+    ptr += sprintf(ptr, "%s", LEFT_PADDING);
+    if (label_lines) ptr += sprintf(ptr, "    ");
+    ptr += sprintf(ptr, "%s", BORDER_UPPER_LEFT);
+
+    for (int i = 0; i < m->width; i++)
     {
-        printf("%s", BORDER_HORIZONTAL);
+        ptr += sprintf(ptr, "%s", BORDER_HORIZONTAL);
     }
-    printf("%s\n", BORDER_LOWER_RIGHT);
+    ptr += sprintf(ptr, "%s\n", BORDER_UPPER_RIGHT);
 
-    printf("\n%s", references);
+    for (int i = 0; i < m->height; i++)
+    {
+        ptr += sprintf(ptr, "%s", LEFT_PADDING);
+        if (label_lines)
+        {
+            if ((i+1) % 5 == 0)
+                ptr += sprintf(ptr, "%3d ", (i+1));
+            else
+                ptr += sprintf(ptr, "  %s ", DOT);
+        }
+        ptr += sprintf(ptr, "%s", BORDER_VERTICAL);
+
+        for (int j = 0; j < m->width; j++)
+        {
+            ptr += sprintf(ptr, "%s", get_cell_char(m, i, j));
+        }
+        ptr += sprintf(ptr, "%s\n", BORDER_VERTICAL);
+    }
+
+    ptr += sprintf(ptr, "%s", LEFT_PADDING);
+    if (label_lines) ptr += sprintf(ptr, "    ");
+    ptr += sprintf(ptr, "%s", BORDER_LOWER_LEFT);
+
+    for (int i = 0; i < m->width; i++)
+    {
+        ptr += sprintf(ptr, "%s", BORDER_HORIZONTAL);
+    }
+    ptr += sprintf(ptr, "%s\n", BORDER_LOWER_RIGHT);
+
+    if (print_references) ptr += sprintf(ptr, "\n%s", references);
+
+    fwrite(buffer, 1, ptr - buffer, stdout);
+    fflush(stdout);
+
+    free(buffer);
 }
 
 void clear()

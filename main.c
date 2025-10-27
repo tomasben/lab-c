@@ -14,25 +14,27 @@
 
 /*
  * TODO:
+ * (*) Mostrar mensaje de error cuando dijkstra no encuentre un camino
  * (*) Manejo de números negativos o grandes en inputs
- * (*) Mejorar mostrado de matriz en pantalla usando buffers
- * (*) Añadir opción para enumerar filas y columnas al mostrar matriz
+ * (*) Mejorar mostrado de matriz en pantalla usando buffers [B]
+ * (*) Añadir opción para enumerar filas y columnas al mostrar matriz [B]
+ * (*) Agregar static a variables donde se pueda y unsigned int
  */
 
 int main(void)
 {
     const char *overview =
-    "                                                    \n"
-    "    ┏━━━┳━━━┳━━━┓    ┃ Dimensiones: %i✕%i          \n"
+    "                                                              \n"
+    "    ┏━━━┳━━━┳━━━┓    ┃ Dimensiones: %i✕%i                     \n"
     "    ┣━━━╋━━━╋━━━┫    ┃ Permitir desplazamientos diagonales? %s\n"
-    "    ┣━━━╋━━━╋━━━┫    ┃ Punto de inicio: (%i, %i)   \n"
-    "    ┗━━━┻━━━┻━━━┛    ┃ Punto de fín: (%i, %i)      \n";
+    "    ┣━━━╋━━━╋━━━┫    ┃ Punto de inicio: (%i, %i)              \n"
+    "    ┗━━━┻━━━┻━━━┛    ┃ Punto de fín: (%i, %i)                 \n";
 
     const char *options =
     "\n  OPCIONES:                         "
     "\n    [1] Definir celdas de obstáculos"
     "\n    [2] Modificar costos de celdas  "
-    // "\n    [3] Previsualizar mapa          "
+    "\n    [3] Previsualizar mapa          "
     "\n    [4] Calcular camino óptimo      ";
 
     struct matrix *map = define_map();
@@ -59,6 +61,16 @@ int main(void)
                 define_areas(map);
                 break;
             case 3:
+                clear();
+                print_map(map, 1, 0);
+
+                printf("\n  Presione ENTER para retroceder ↩︎ ");
+
+                int c;
+                while ((c = getchar()) != '\n' && c != EOF) {
+                    /* Consume characters */
+                }
+                getchar();
                 break;
             case 4:
                 cont = 0;
@@ -67,7 +79,8 @@ int main(void)
     }
 
     dijkstra(map, start, end);
-    print_map(map);
+    clear();
+    print_map(map, 0, 1);
 }
 
 struct matrix* define_map()
@@ -82,13 +95,16 @@ struct matrix* define_map()
     "  ━━━━━ Definición del mapa ━━━━━\n"
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
+    const char *info =
+    "\n  🛈  Para una matriz visualmente cuadrada,"
+    "\n  el largo debe ser el doble de su alto.\n ";
+
     clear();
     printf(header);
     int mat_h, mat_w = 0;
 
     printf("\n  (1/4) Ingrese las dimensiones del mapa \n");
-    printf("\n  🛈  Para una matriz visualmente cuadrada,"
-           "\n  el largo debe ser el doble de su alto.\n");
+    printf(info);
 
     while (1)
     {
@@ -112,7 +128,8 @@ struct matrix* define_map()
     while (1)
         {
             printf("\n  ▶ ");
-            if (scanf(" %c", &input) != 1) {
+            if (scanf(" %c", &input) != 1)
+            {
                 printf("\n\n  Error de lectura.\n");
                 continue;
             }

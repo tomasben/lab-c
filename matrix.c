@@ -32,7 +32,8 @@ void set_cell_weight(struct matrix *m, int row, int col, int new_weight)
     if (cell != NULL)
     {
         if (cell->type == START) return;
-        if (new_weight > m->max_weight) m->max_weight = new_weight;
+        if (new_weight < m->min_weight) m->min_weight = new_weight;
+        else if (new_weight > m->max_weight) m->max_weight = new_weight;
         cell->weight = new_weight;
     }
 }
@@ -57,6 +58,7 @@ struct matrix* create_matrix(int h, int w, int allow_diag)
     m->height = h;
     m->width = w;
     m->max_weight = 1;
+    m->min_weight = 1;
     m->allow_diag_moves = allow_diag;
 
     size_t total_cells = (size_t)h * w;

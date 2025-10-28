@@ -1,6 +1,7 @@
 struct vertex {
     int row;
     int col;
+    int is_diagonal;
 };
 
-void dijkstra(struct matrix *m, struct cell *start, struct cell *target);
+int dijkstra(struct matrix *m, struct cell *start, struct cell *target);

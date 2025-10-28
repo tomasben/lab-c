@@ -1,12 +1,31 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "matrix.h"
 #include "path.h"
 
-#define INFINITY 999999
+/*
+ * Algoritmo de Dijkstra paso a paso:
+ * (1) se crea un conjunto con todos los nodos sin visitar.
+ * (2) se asigna a todos los nodos un peso que indica el costo para llegar
+ *  hasta este desde el punto de partida. Este valor inicialmente es infinito
+ *  y luego se lo reemplaza por la sumatoria de los costos de los nodos que
+ *  lo para llegar hasta él.
+ * (3) de los nodos no visitados, se selecciona el siguiente punto con el menor
+ *  peso. Inicialmente este va a ser el punto inicial por ser el único con peso
+ *  cero.
+ * (4) para el nodo seleccionado, se obtiene todos los vecinos y se actualiza
+ * su peso considerando el mentor entre su peso actual y el costo acumulado
+ * para haber llegado hasta él.
+ * (5) luego de realizar el paso anterior por cada nodo vecino, se marca el
+ * actual como visitado y se repite desde el paso 5.
+ * (6) una vez agotado el conjunto de los no visitados, cada nodo contendrá
+ * como peso el menor costo posible para llegar hasta él y el nodo que le
+ * precede, permitiendo así reconstruir el camino hasta el inicio.
+ */
 
-struct cell* get_neighbours(struct matrix *m, struct cell *current,
+struct vertex* get_neighbours(struct matrix *m, struct cell *current,
     int *neighbour_count)
 {
     int count = 0;
@@ -16,8 +35,6 @@ struct cell* get_neighbours(struct matrix *m, struct cell *current,
     int dy[8] = {-1, 1, 0,  0, -1, -1,  1, 1};
     int dx[8] = { 0, 0, 1, -1, -1,  1, -1, 1};
 
-    // [4] para las direcciones cardinales
-    // y [8] para direcciones alrededor
     int limit = m->allow_diag_moves ? 8 : 4;
 
     struct vertex temp;
@@ -25,6 +42,7 @@ struct cell* get_neighbours(struct matrix *m, struct cell *current,
     {
         temp.row = current->row + dy[i];
         temp.col = current->col + dx[i];
+        temp.is_diagonal = i > 3 ? 1 : 0;
 
         if ((temp.row >= 0 && temp.row < m->height)
             && (temp.col >= 0 && temp.col < m->width))
@@ -36,7 +54,7 @@ struct cell* get_neighbours(struct matrix *m, struct cell *current,
 
     *neighbour_count = count;
 
-    struct cell *neighbours = (struct cell *)malloc(count * sizeof(struct cell));
+    struct vertex *neighbours = (struct vertex *)malloc(count * sizeof(struct vertex));
     if (neighbours == NULL)
     {
         printf("Error al almacenar memoria para vértices vecinos");
@@ -45,17 +63,17 @@ struct cell* get_neighbours(struct matrix *m, struct cell *current,
 
     for (int i = 0; i < count; i++)
     {
-        neighbours[i] = *get_cell(m, candidates[i].row, candidates[i].col);
+        neighbours[i] = candidates[i];
     }
 
     return neighbours;
 }
 
-void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
+int dijkstra(struct matrix *m, struct cell *start, struct cell *target)
 {
     int i, j;
     int visited[m->height][m->width];
-    int distance[m->height][m->width];
+    float distance[m->height][m->width];
     struct cell *previous[m->height][m->width];
 
     for (i = 0; i < m->height; i++)
@@ -69,14 +87,11 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
 
     distance[start->row][start->col] = 0;
 
-    int iter = 0;
     while (1)
     {
-        int min_dist = INFINITY;
-        struct cell *current, *temp = NULL;
+        float min_dist = INFINITY;
+        struct cell *current = NULL, *temp = NULL;
 
-        // Obtenemos el nodo mas cercano
-        // En la primera iteración será el nodo de inicio porque su distancia es 0
         for (i = 0; i < m->height; i++)
         {
             for (j = 0; j < m->width; j++)
@@ -91,25 +106,20 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
             }
         }
 
-        // Si no quedan nodos por visitar o llegamos al objetivo, salimos
-        if (current == NULL || current == target)
-        {
-            break;
-        }
+        if (current == NULL) break;
 
         visited[current->row][current->col] = 1;
 
-        // Obtenemos todas las celdas vecinas al nodo actual y actualizamos la
-        // distancia hasta estos sumando a su distancia actual el recorrido hecho
         int neighbour_count = 0;
-        struct cell *neighbours = get_neighbours(m, current, &neighbour_count);
+        struct vertex *neighbours = get_neighbours(m, current, &neighbour_count);
 
         for (i = 0; i < neighbour_count; i++)
         {
-            struct cell *nth_neighbour = &neighbours[i];
+            struct cell *nth_neighbour = get_cell(m, neighbours[i].row, neighbours[i].col);
             if (nth_neighbour && !visited[nth_neighbour->row][nth_neighbour->col])
             {
-                int new_dist = distance[current->row][current->col] + nth_neighbour->weight;
+                float added_cost = neighbours[i].is_diagonal ? sqrt(2) * nth_neighbour->weight : nth_neighbour->weight;
+                float new_dist = distance[current->row][current->col] + added_cost;
 
                 if (new_dist < distance[nth_neighbour->row][nth_neighbour->col])
                 {
@@ -119,28 +129,19 @@ void dijkstra(struct matrix *m, struct cell *start, struct cell *target)
             }
         }
 
-        // for (i = 0; i < m->height; i++)
-        // {
-        //     for (j = 0; j < m->width; j++)
-        //     {
-        //         printf(
-        //             "A%i%i visitado: %i & distancia: %i\n",
-        //             i, j, visited[i][j], distance[i][j]);
-        //     }
-        // }
-
         free(neighbours);
-        iter++;
     }
 
-    // Reconstruimos el camino hasta el inicio
     struct cell *current = previous[target->row][target->col];
-    while (current != NULL && current != start)
+    if (current == NULL) return 0;
+    else
     {
-        if (current != NULL)
+        while (current != NULL && current != start)
         {
-            current->type = PATH;
+            if (current != NULL) current->type = PATH;
+            current = previous[current->row][current->col];
         }
-        current = previous[current->row][current->col];
     }
+
+    return 1;
 }

@@ -26,12 +26,15 @@
 
 const char* get_cell_char(struct matrix *m, int row, int col)
 {
+    float basis = m->max_weight - m->min_weight;
     float ratio;
     struct cell *cell = get_cell(m, row, col);
 
     switch (cell->type)
     {
         case EMPTY:
+            if (basis == 0) return " ";
+
             ratio = cell->weight / m->max_weight;
 
             if (ratio <= 0.25)
@@ -41,7 +44,7 @@ const char* get_cell_char(struct matrix *m, int row, int col)
             else if (ratio <= 0.75)
                 return MEDIUM_SHADE;
             else
-                return " ";
+                return SOLID_BLOCK;
         case START:
             return TARGET;
         case END:
@@ -59,7 +62,7 @@ void print_map(struct matrix *m, int label_lines, int print_references)
 {
     const char *references =
     "  Referencias:                                                      \n"
-    "   [█] bloque sólido: representa obstáculos  ┃ [•] pasos del camino \n"
+    "   [█] bloque sólido: obstáculos             ┃ [•] pasos del camino \n"
     "   [▓] sombreado alto: celdas de peso mayor  ┃ [◎] punto de inicio  \n"
     "   [▒] sombreado medio: celdas de peso medio ┃ [✗] punto de fín     \n"
     "   [░] sombreado bajo: celdas de peso menor  ┃                      \n";

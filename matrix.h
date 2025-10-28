@@ -10,13 +10,14 @@ struct cell {
     int row;
     int col;
     celltype type;
-    int weight;
+    float weight;
 };
 
 struct matrix {
     int height;
     int width;
     int max_weight;
+    int min_weight;
     int allow_diag_moves;
     // Puntero al 1er elemento de un bloque contiguo de celdas
     // (0, 0) | (0, 1) | (0, 2) | (0, 3) | (1, 0) | ...

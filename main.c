@@ -43,6 +43,8 @@ int main(void)
 
     int input = 0;
     int cont = 1;
+    int result;
+
     while (cont)
     {
         clear();
@@ -50,7 +52,8 @@ int main(void)
             map->allow_diag_moves ? "Si" : "No", start->col + 1,
             start->row + 1, end->col + 1, end->row + 1);
         printf(options);
-        printf("\n\n  ▶ "); scanf(" %i", &input);
+        printf("\n\n  ▶ ");
+        scanf(" %i", &input);
 
         switch (input)
         {
@@ -67,26 +70,30 @@ int main(void)
                 printf("\n  Presione ENTER para retroceder ↩︎ ");
 
                 int c;
-                while ((c = getchar()) != '\n' && c != EOF) {
-                    /* Consume characters */
-                }
+                while ((c = getchar()) != '\n' && c != EOF) {}
+
                 getchar();
                 break;
             case 4:
-                cont = 0;
+                result = dijkstra(map, start, end);
+                if (result)
+                {
+                    clear();
+                    print_map(map, 0, 1);
+                    cont = 0;
+                }
+                else
+                {
+                    printf("\n  Error: no existe un camino hacia el objetivo.\n");
+                    printf("\n  Presione ENTER para volver ↩︎ ");
+
+                    int c;
+                    while ((c = getchar()) != '\n' && c != EOF) {}
+                    getchar();
+                }
+
                 break;
         }
-    }
-
-    int result = dijkstra(map, start, end);
-    if (result)
-    {
-        clear();
-        print_map(map, 0, 1);
-    }
-    else
-    {
-        printf("\n  Error: no se pudo encontrar un camino hacia el objetivo.\n");
     }
 }
 
@@ -294,57 +301,34 @@ void define_areas(struct matrix *m)
     "  ━━━━━ Asignación de pesos ━━━━━\n"
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
-    const char *options =
-    "\n  OPCIONES:                                   "
-    "\n   [1] Modificar el peso de un rango de celdas"
-    "\n   [2] Retroceder ↩︎                           ";
-
     const char *info =
-    "\n  🛈  El peso máximo actual de una celda es de %i"
-    "\n     y el peso mínimo es de %i.\n                ";
+    "\n  🛈  El peso máximo actual de una celda es de %i                "
+    "\n     y el peso mínimo es de %i.\n                                "
+    "\n  🛈  Defina dos puntos en la misma fila o columna para modificar"
+    "\n  el peso de una línea de celdas, o seleccione dos puntos        "
+    "\n  diferentes para modificar el área comprendida entre estos.\n   ";
 
-    int input = 0;
-    int cont = 1;
-    while (cont)
+    clear();
+    printf(header);
+    printf(info, m->max_weight, m->min_weight);
+
+    struct vertex *points = get_vertices(m, 2);
+    struct vertex p1 = points[0],  p2 = points[1];
+
+    int new_weight = 1;
+    printf("\n  Ingrese nuevo peso: ");
+    scanf(" %i", &new_weight);
+
+    int min_row = (p2.row > p1.row) ? p1.row : p2.row;
+    int max_row = (p2.row > p1.row) ? p2.row : p1.row;
+    int min_col = (p2.col > p1.col) ? p1.col : p2.col;
+    int max_col = (p2.col > p1.col) ? p2.col : p1.col;
+
+    for (int i = min_row; i <= max_row; i++)
     {
-        clear();
-        printf(header);
-        printf(info, m->max_weight, m->min_weight);
-        printf(options);
-        printf("\n\n  ▶ ");
-        scanf(" %i", &input);
-
-        switch (input)
+        for (int j = min_col; j <= max_col; j++)
         {
-            case 1:
-            {
-                struct vertex *points = get_vertices(m, 2);
-                struct vertex p1 = points[0],  p2 = points[1];
-
-                int new_weight = 1;
-                printf("\n  Ingrese nuevo peso: ");
-                scanf(" %i", &new_weight);
-
-                int min_row = (p2.row > p1.row) ? p1.row : p2.row;
-                int max_row = (p2.row > p1.row) ? p2.row : p1.row;
-                int min_col = (p2.col > p1.col) ? p1.col : p2.col;
-                int max_col = (p2.col > p1.col) ? p2.col : p1.col;
-
-                for (int i = min_row; i <= max_row; i++)
-                {
-                    for (int j = min_col; j <= max_col; j++)
-                    {
-                        set_cell_weight(m, i - 1, j - 1, new_weight);
-                    }
-                }
-
-                break;
-            }
-            case 2:
-            {
-                cont = 0;
-                break;
-            }
+            set_cell_weight(m, i - 1, j - 1, new_weight);
         }
     }
 }

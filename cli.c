@@ -44,7 +44,7 @@ const char* get_cell_char(struct matrix *m, int row, int col)
             else if (ratio <= 0.75)
                 return MEDIUM_SHADE;
             else
-                return SOLID_BLOCK;
+                return DARK_SHADE;
         case START:
             return TARGET;
         case END:

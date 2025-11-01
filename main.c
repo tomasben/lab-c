@@ -3,6 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+    #include <windows.h>
+    #define WINDOWS_CP_UTF8 65001
+#endif 
+
 #include "main.h"
 #include "matrix.h"
 #include "path.h"
@@ -23,6 +28,8 @@
 
 int main(void)
 {
+    set_windows_codepage();
+
     const char *overview =
     "                                                              \n"
     "    ┏━━━┳━━━┳━━━┓    ┃ Dimensiones: %i✕%i                     \n"
@@ -332,3 +339,13 @@ void define_areas(struct matrix *m)
         }
     }
 }
+
+void set_windows_codepage()
+{
+    #ifdef _WIN32
+        if (SetConsoleOutputCP(WINDOWS_CP_UTF8))
+            printf("Console codepage set to UTF-8 on Windows.\n");
+        else
+            fprintf(stderr, "Warning: failed to set console codepage to UTF-8.\n");
+    #endif
+}    

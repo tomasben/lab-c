@@ -6,25 +6,16 @@
 #ifdef _WIN32
     #include <windows.h>
     #define WINDOWS_CP_UTF8 65001
-#endif 
+#endif
 
-#include "main.h"
-#include "matrix.h"
-#include "path.h"
-#include "cli.h"
-#include "utils.h"
+#include "../include/main.h"
+#include "../include/matrix.h"
+#include "../include/path.h"
+#include "../include/cli.h"
+#include "../include/utils.h"
 
 #define MATRIX_H_LIMIT 100
-#define MATRIX_W_LIMIT 150
-
-/*
- * TODO:
- * (*) Mostrar mensaje de error cuando dijkstra no encuentre un camino
- * (*) Manejo de números negativos o grandes en inputs
- * (*) Mejorar mostrado de matriz en pantalla usando buffers [B]
- * (*) Añadir opción para enumerar filas y columnas al mostrar matriz [B]
- * (*) Agregar static a variables donde se pueda y unsigned int
- */
+#define MATRIX_W_LIMIT 80
 
 int main(void)
 {
@@ -41,8 +32,9 @@ int main(void)
     "\n  OPCIONES:                         "
     "\n    [1] Definir obstáculos          "
     "\n    [2] Modificar costos de celdas  "
-    "\n    [3] Previsualizar mapa          "
-    "\n    [4] Calcular camino óptimo      ";
+    "\n    [3] Previsualizar radar         "
+    "\n    [4] Calcular camino óptimo      "
+    "\n    [5] Cargar mapas de muestra     ";
 
     struct matrix *map = define_map();
     struct cell *start = define_start(map);
@@ -77,7 +69,7 @@ int main(void)
                 printf("\n  Presione ENTER para retroceder ↩︎ ");
 
                 int c;
-                while ((c = getchar()) != '\n' && c != EOF) {}
+                while ((c = getchar()) != '\n' && c != EOF);
 
                 getchar();
                 break;
@@ -95,10 +87,12 @@ int main(void)
                     printf("\n  Presione ENTER para volver ↩︎ ");
 
                     int c;
-                    while ((c = getchar()) != '\n' && c != EOF) {}
+                    while ((c = getchar()) != '\n' && c != EOF);
                     getchar();
                 }
-
+                break;
+            case 5:
+                load_maps(&map, &start, &end);
                 break;
         }
     }
@@ -113,18 +107,18 @@ struct matrix* define_map()
     "           ┣━━━╋━━━╋━━━┫         \n"
     "           ┗━━━┻━━━┻━━━┛         \n"
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    "  ━━━━━ Definición del mapa ━━━━━\n"
+    "  ━━━━━ Definición del radar ━━━━\n"
     "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
     const char *info =
-    "\n  🛈  Para una matriz visualmente cuadrada,"
-    "\n  el largo debe ser el doble de su alto.\n ";
+    "\n  🛈  Para un radar visualmente cuadrado, el        "
+    "\n  largo debe ser el doble de su alto. (Ej: 25x50)\n ";
 
     clear();
     printf(header);
     int mat_h, mat_w = 0;
 
-    printf("\n  (1/4) Ingrese las dimensiones del mapa \n");
+    printf("\n  (1/4) Ingrese las dimensiones del radar \n");
     printf(info);
 
     while (1)
@@ -138,7 +132,7 @@ struct matrix* define_map()
             break;
         }
 
-        printf("\n  Error: el mapa puede tener un máximo de %i✕%i celdas.",
+        printf("\n  Error: el radar puede tener un máximo de %i✕%i celdas.",
             MATRIX_H_LIMIT, MATRIX_W_LIMIT);
         printf("\n  Ingrese las dimensiones nuevamente.\n");
     }
@@ -340,6 +334,36 @@ void define_areas(struct matrix *m)
     }
 }
 
+void load_maps(struct matrix **m, struct cell **start, struct cell **end)
+{
+    const char *options =
+    "                           \n"
+    "  [1] Camino entre icebers \n"
+    "  [2] Hielos flotantes     \n";
+
+    int input;
+    printf(options);
+
+    struct matrix *new_map = NULL;
+    while (1)
+    {
+        printf("\n  ▶ ");
+        scanf(" %i", &input);
+
+        if (input == 1)
+            new_map = load_map("mapas/entre icebergs.txt", &(*start), &(*end));
+        else
+            new_map = load_map("mapas/hielos flotantes.txt", &(*start), &(*end));
+
+        if (new_map)
+        {
+            destroy_matrix(*m);
+            *m = new_map;
+            break;
+        }
+    }
+}
+
 void set_windows_codepage()
 {
     #ifdef _WIN32
@@ -348,4 +372,4 @@ void set_windows_codepage()
         else
             fprintf(stderr, "Warning: failed to set console codepage to UTF-8.\n");
     #endif
-}    
+}

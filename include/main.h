@@ -8,4 +8,6 @@ void define_obstacles(struct matrix *m);
 
 void define_areas(struct matrix *m);
 
+void load_maps(struct matrix **m, struct cell **start, struct cell **end);
+
 void set_windows_codepage();

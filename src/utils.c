@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "matrix.h"
-#include "path.h"
+#include "../include/matrix.h"
+#include "../include/path.h"
 
 struct vertex* get_vertices(struct matrix *m, int amount)
 {

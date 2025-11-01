@@ -1,3 +1,10 @@
 *.gch
-a.out
+*.out
+*.exe
+test
+
+test.c
+
+assets/mapa*
 dijkstra.md
+mapa.txt

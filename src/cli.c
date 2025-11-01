@@ -3,14 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "matrix.h"
+#include "../include/matrix.h"
 
 #define SOLID_BLOCK "█"
 #define DARK_SHADE "▓"
 #define MEDIUM_SHADE "▒"
 #define LIGHT_SHADE "░"
 
-#define TARGET "◎"
+#define TARGET "▲"
 #define CROSS "✗"
 #define DOT "•"
 #define INVALID "�"
@@ -144,4 +144,45 @@ void clear()
     #else
         system("clear");
     #endif
+}
+
+struct matrix* load_map(const char *filename, struct cell **start,
+    struct cell **end)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) return NULL;
+
+    int height, width, diag, start_x, start_y, end_x, end_y;
+    fscanf(file, "%d %d %d %d %d %d %d",
+        &height, &width, &diag, &start_x, &start_y, &end_x, &end_y);
+
+    struct matrix *m = create_matrix(height, width, diag);
+    if (m == NULL) {
+        fclose(file);
+        return NULL;
+    }
+
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            int weight;
+            fscanf(file, "%d", &weight);
+
+            if (weight != 0)
+                set_cell_weight(m, i, j, weight);
+            else
+                set_cell_type(m, i, j, OBSTACLE);
+        }
+    }
+
+    fclose(file);
+
+    *start = get_cell(m, start_y - 1, start_y - 1);
+    *end = get_cell(m, end_y - 1, end_x - 1);
+
+    if (*start) (*start)->type = START;
+    if (*end) (*end)->type = END;
+
+    return m;
 }

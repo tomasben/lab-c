@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "matrix.h"
-#include "cli.h"
-#include "path.h"
+#include "../include/matrix.h"
+#include "../include/cli.h"
+#include "../include/path.h"
 
 /*
  * @brief Devuelve un puntero a un elemento a[ij] de la matriz
@@ -84,4 +84,11 @@ struct matrix* create_matrix(int h, int w, int allow_diag)
     }
 
     return m;
+}
+
+void destroy_matrix(struct matrix *m)
+{
+    if (m == NULL) return;
+    free(m->cells);
+    free(m);
 }

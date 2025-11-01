@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "matrix.h"
-#include "path.h"
+#include "../include/matrix.h"
+#include "../include/path.h"
 
 /*
  * Algoritmo de Dijkstra paso a paso:

@@ -152,9 +152,9 @@ struct matrix* load_map(const char *filename, struct cell **start,
     FILE *file = fopen(filename, "r");
     if (file == NULL) return NULL;
 
-    int height, width, diag, start_x, start_y, end_x, end_y;
+    int height, width, diag, st_row, st_col, end_row, end_col;
     fscanf(file, "%d %d %d %d %d %d %d",
-        &height, &width, &diag, &start_x, &start_y, &end_x, &end_y);
+        &height, &width, &diag, &st_row, &st_col, &end_row, &end_col);
 
     struct matrix *m = create_matrix(height, width, diag);
     if (m == NULL) {
@@ -178,8 +178,8 @@ struct matrix* load_map(const char *filename, struct cell **start,
 
     fclose(file);
 
-    *start = get_cell(m, start_y - 1, start_y - 1);
-    *end = get_cell(m, end_y - 1, end_x - 1);
+    *start = get_cell(m, st_row - 1, st_col - 1);
+    *end = get_cell(m, end_row - 1, end_col - 1);
 
     if (*start) (*start)->type = START;
     if (*end) (*end)->type = END;

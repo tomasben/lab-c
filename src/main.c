@@ -51,6 +51,7 @@ int main(void)
             map->allow_diag_moves ? "Si" : "No", start->col + 1,
             start->row + 1, end->col + 1, end->row + 1);
         printf(options);
+
         printf("\n\n  ▶ ");
         scanf(" %i", &input);
 
@@ -168,6 +169,7 @@ struct matrix* define_map()
 struct cell* define_start(struct matrix *m)
 {
     printf("\n  (3/4) Seleccione el punto de partida\n");
+
     struct vertex *point = get_vertices(m, 1);
     if (point == NULL) return NULL;
 

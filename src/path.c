@@ -72,41 +72,67 @@ struct vertex* get_neighbours(struct matrix *m, struct cell *current,
 int dijkstra(struct matrix *m, struct cell *start, struct cell *target)
 {
     int i, j;
+    struct node *unvisited = NULL;
+    struct cell *previous[m->height][m->width];
     int visited[m->height][m->width];
     float distance[m->height][m->width];
-    struct cell *previous[m->height][m->width];
 
+    struct cell *cell = NULL;
     for (i = 0; i < m->height; i++)
     {
         for (j = 0; j < m->width; j++)
         {
             visited[i][j] = 0;
             distance[i][j] = INFINITY;
+            previous[i][j] = NULL;
+
+            cell = get_cell(m, i, j);
+            if (cell->type != OBSTACLE)
+            {
+                struct node *new_node = (struct node *)malloc(sizeof(struct node));
+                new_node->value = cell;
+                new_node->next = unvisited;
+                unvisited = new_node;
+            }
         }
     }
 
     distance[start->row][start->col] = 0;
 
-    while (1)
+    while (unvisited != NULL)
     {
         float min_dist = INFINITY;
-        struct cell *current = NULL, *temp = NULL;
+        struct cell *current = NULL;
+        struct node *min_node = NULL;
+        struct node *min_prev_node = NULL;
 
-        for (i = 0; i < m->height; i++)
+        struct node *a = NULL;
+        struct node *p = NULL;
+
+        p = unvisited;
+        while (p != NULL)
         {
-            for (j = 0; j < m->width; j++)
+            cell = p->value;
+            if (distance[cell->row][cell->col] < min_dist)
             {
-                temp = get_cell(m, i, j);
-                if (!visited[i][j] && distance[i][j] < min_dist
-                    && temp->type != OBSTACLE)
-                {
-                    min_dist = distance[i][j];
-                    current = temp;
-                }
+                min_dist = distance[cell->row][cell->col];
+                current = cell;
+                min_node = p;
+                min_prev_node = a;
             }
+
+            a = p;
+            p = p->next;
         }
 
         if (current == NULL) break;
+
+        if (min_prev_node == NULL)
+            unvisited = min_node->next;
+        else
+            min_prev_node->next = min_node->next;
+
+        free(min_node);
 
         visited[current->row][current->col] = 1;
 
@@ -132,14 +158,14 @@ int dijkstra(struct matrix *m, struct cell *start, struct cell *target)
         free(neighbours);
     }
 
-    struct cell *current = previous[target->row][target->col];
-    if (current == NULL) return 0;
+    struct cell *path_cell = previous[target->row][target->col];
+    if (path_cell == NULL) return 0;
     else
     {
-        while (current != NULL && current != start)
+        while (path_cell != NULL && path_cell != start)
         {
-            if (current != NULL) current->type = PATH;
-            current = previous[current->row][current->col];
+            path_cell->type = PATH;
+            path_cell = previous[path_cell->row][path_cell->col];
         }
     }
 

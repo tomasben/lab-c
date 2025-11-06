@@ -138,30 +138,29 @@ struct matrix* define_map()
         printf("\n  Ingrese las dimensiones nuevamente.\n");
     }
 
+    int c;
     char input;
     int allow_diag = 0;
     printf("\n  (2/4) Desea permitir movimientos diagonales? [s/n]\n");
+
     while (1)
+    {
+        printf("\n  ▶ ");
+
+        if (scanf(" %c", &input) != 1)
+            continue;
+        while ((c = getchar()) != '\n' && c != EOF);
+
+        if (input == 's')
         {
-            printf("\n  ▶ ");
-            if (scanf(" %c", &input) != 1)
-            {
-                printf("\n\n  Error de lectura.\n");
-                continue;
-            }
-
-            if (input == 's')
-            {
-                allow_diag = 1;
-                break;
-            }
-            else if (input == 'n')
-            {
-                break;
-            }
-
-            printf("\n  Error: ingrese el caracter 's' o 'n'.\n");
+            allow_diag = 1;
+            break;
         }
+        else if (input == 'n')
+            break;
+        else
+            printf("\n  Error: ingrese el caracter 's' o 'n'.\n");
+    }
 
     return create_matrix(mat_h, mat_w, allow_diag);
 }
@@ -354,8 +353,10 @@ void load_maps(struct matrix **m, struct cell **start, struct cell **end)
 
         if (input == 1)
             new_map = load_map("mapas/entre icebergs.txt", &(*start), &(*end));
-        else
+        else if (input == 2)
             new_map = load_map("mapas/hielos flotantes.txt", &(*start), &(*end));
+        else
+            continue;
 
         if (new_map)
         {

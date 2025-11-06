@@ -5,26 +5,6 @@
 #include "../include/matrix.h"
 #include "../include/path.h"
 
-/*
- * Algoritmo de Dijkstra paso a paso:
- * (1) se crea un conjunto con todos los nodos sin visitar.
- * (2) se asigna a todos los nodos un peso que indica el costo para llegar
- *  hasta este desde el punto de partida. Este valor inicialmente es infinito
- *  y luego se lo reemplaza por la sumatoria de los costos de los nodos que
- *  lo para llegar hasta él.
- * (3) de los nodos no visitados, se selecciona el siguiente punto con el menor
- *  peso. Inicialmente este va a ser el punto inicial por ser el único con peso
- *  cero.
- * (4) para el nodo seleccionado, se obtiene todos los vecinos y se actualiza
- * su peso considerando el mentor entre su peso actual y el costo acumulado
- * para haber llegado hasta él.
- * (5) luego de realizar el paso anterior por cada nodo vecino, se marca el
- * actual como visitado y se repite desde el paso 5.
- * (6) una vez agotado el conjunto de los no visitados, cada nodo contendrá
- * como peso el menor costo posible para llegar hasta él y el nodo que le
- * precede, permitiendo así reconstruir el camino hasta el inicio.
- */
-
 struct vertex* get_neighbours(struct matrix *m, struct cell *current,
     int *neighbour_count)
 {
